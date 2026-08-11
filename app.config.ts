@@ -9,6 +9,7 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const variant = process.env.APP_VARIANT || 'production';
+  console.log('variant:', variant);
 
   // Define unique identifiers for each environment
   const uniqueIdMap: Record<string, string> = {
