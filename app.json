@@ -9,9 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.barryph.loco",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.barryph.loco",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -43,6 +45,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8e49f0f1-bb42-49d7-ab6a-1c5ccca1ee6a"
+      }
+    },
+    "owner": "barryph"
   }
 }
