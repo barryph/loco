@@ -73,7 +73,7 @@ export function ReminderMap({
   cameraRef,
   mapViewRef,
   initialCoordinate,
-  initialZoom = 14,
+  initialZoom = 11.5,
   showCenterPin = false,
   selectedCoordinate,
   radiusCircles = [],
@@ -154,14 +154,12 @@ export function ReminderMap({
       >
         <Camera
           ref={resolvedCameraRef}
-          defaultSettings={
-            initialCoordinate
-              ? {
-                centerCoordinate: [initialCoordinate.longitude, initialCoordinate.latitude],
-                zoomLevel: initialZoom,
-              }
-              : undefined
-          }
+          defaultSettings={{
+            centerCoordinate: initialCoordinate
+              ? [initialCoordinate.longitude, initialCoordinate.latitude]
+              : [0, 0],
+            zoomLevel: initialZoom,
+          }}
         />
         {isNative && userLocation ? (
           <PointAnnotation

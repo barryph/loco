@@ -58,6 +58,7 @@ export default function NewReminderScreen() {
   const mapViewRef = useRef<React.ElementRef<typeof MapView>>(null);
 
   const [coordinate, setCoordinate] = useState<Coordinate | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [manualPinMode, setManualPinMode] = useState(false);
   const [place, setPlace] = useState<SelectedPlace | null>(null);
   const [name, setName] = useState('');
@@ -113,13 +114,14 @@ export default function NewReminderScreen() {
           };
           userLocationRef.current = coord;
           setCoordinate(coord);
-          flyToCoord(coord);
         }
       } catch (e) {
         console.warn('Failed to get user location:', e);
+      } finally {
+        setMapReady(true);
       }
     })();
-  }, [flyToCoord, mountedInEditMode]);
+  }, [mountedInEditMode]);
 
   useEffect(() => {
     getReminders().then(setOtherReminders);
@@ -137,6 +139,7 @@ export default function NewReminderScreen() {
     if (editingId) {
       getReminder(editingId).then((reminder) => {
         if (!reminder) {
+          setMapReady(true);
           return;
         }
         const coord = { latitude: reminder.latitude, longitude: reminder.longitude };
@@ -149,13 +152,12 @@ export default function NewReminderScreen() {
           longitude: reminder.longitude,
         });
         setName(reminder.name);
-        flyToCoord(coord);
+        setMapReady(true);
       });
     } else if (userLocationRef.current) {
       setCoordinate(userLocationRef.current);
-      flyToCoord(userLocationRef.current);
     }
-  }, [editingId, flyToCoord]);
+  }, [editingId]);
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -303,16 +305,19 @@ export default function NewReminderScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <Stack.Screen options={{ title: editingId ? 'Edit reminder' : 'New reminder' }} />
-      <ReminderMap
-        cameraRef={cameraRef}
-        mapViewRef={mapViewRef}
-        showCenterPin={manualPinMode}
-        selectedCoordinate={coordinate}
-        onCenterChange={handleCenterChange}
-        radiusCircles={radiusCircles}
-        reminderPins={reminderPins}
-        recenterButtonTop={60}
-      />
+      {mapReady ? (
+        <ReminderMap
+          cameraRef={cameraRef}
+          mapViewRef={mapViewRef}
+          initialCoordinate={coordinate ?? undefined}
+          showCenterPin={manualPinMode}
+          selectedCoordinate={coordinate}
+          onCenterChange={handleCenterChange}
+          radiusCircles={radiusCircles}
+          reminderPins={reminderPins}
+          recenterButtonTop={60}
+        />
+      ) : null}
 
       <Pressable
         accessibilityRole="button"

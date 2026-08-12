@@ -1,6 +1,5 @@
-import { Camera } from '@rnmapbox/maps';
 import * as Location from 'expo-location';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,13 +16,10 @@ export default function MapScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const cameraRef = useRef<React.ElementRef<typeof Camera>>(null);
+  const [initialCoordinate, setInitialCoordinate] = useState<Coordinate | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [geofenceRadius, setGeofenceRadius] = useState(1000);
-
-  const flyToCoord = useCallback((coord: Coordinate) => {
-    cameraRef.current?.flyTo([coord.longitude, coord.latitude], 1500);
-  }, []);
 
   useEffect(() => {
     (async () => {
@@ -42,16 +38,18 @@ export default function MapScreen() {
           )) ??
           (await Location.getLastKnownPositionAsync({ maxAge: 60_000 }).catch(() => null));
         if (position) {
-          flyToCoord({
+          setInitialCoordinate({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
         }
       } catch (e) {
         console.warn('Failed to get user location:', e);
+      } finally {
+        setMapReady(true);
       }
     })();
-  }, [flyToCoord]);
+  }, []);
 
   useEffect(() => {
     getReminders().then(setReminders);
@@ -81,11 +79,13 @@ export default function MapScreen() {
       <View style={styles.header}>
         <ThemedText type="title">Map</ThemedText>
       </View>
-      <ReminderMap
-        cameraRef={cameraRef}
-        radiusCircles={radiusCircles}
-        reminderPins={reminderPins}
-      />
+      {mapReady ? (
+        <ReminderMap
+          initialCoordinate={initialCoordinate ?? undefined}
+          radiusCircles={radiusCircles}
+          reminderPins={reminderPins}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
