@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Camera } from '@rnmapbox/maps';
+import { Camera, MapView } from '@rnmapbox/maps';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -55,8 +55,10 @@ export default function NewReminderScreen() {
   const editingId = typeof params.id === 'string' && params.id.length > 0 ? params.id : null;
 
   const cameraRef = useRef<React.ElementRef<typeof Camera>>(null);
+  const mapViewRef = useRef<React.ElementRef<typeof MapView>>(null);
 
   const [coordinate, setCoordinate] = useState<Coordinate | null>(null);
+  const [manualPinMode, setManualPinMode] = useState(false);
   const [place, setPlace] = useState<SelectedPlace | null>(null);
   const [name, setName] = useState('');
   const [nameEdited, setNameEdited] = useState(false);
@@ -218,6 +220,18 @@ export default function NewReminderScreen() {
     }
   };
 
+  const toggleManualPinMode = async () => {
+    if (manualPinMode) {
+      setManualPinMode(false);
+      return;
+    }
+    setManualPinMode(true);
+    const center = await mapViewRef.current?.getCenter().catch(() => null);
+    if (center) {
+      handleCenterChange({ latitude: center[1], longitude: center[0] });
+    }
+  };
+
   const selectResult = (result: MapboxPlace) => {
     const coord = { latitude: result.latitude, longitude: result.longitude };
     setCoordinate(coord);
@@ -264,11 +278,15 @@ export default function NewReminderScreen() {
     }
   };
 
-  const locationSummary = place
-    ? place.name
-    : coordinate
+  const locationSummary = manualPinMode
+    ? coordinate
       ? `${coordinate.latitude.toFixed(5)}, ${coordinate.longitude.toFixed(5)}`
-      : 'Search for a place or move the map';
+      : 'Move the map to choose a location'
+    : place
+      ? place.name
+      : coordinate
+        ? `${coordinate.latitude.toFixed(5)}, ${coordinate.longitude.toFixed(5)}`
+        : 'Search for a place or move the map';
 
   const radiusCircles = otherReminders.map((reminder) => ({
     id: reminder.id,
@@ -287,13 +305,37 @@ export default function NewReminderScreen() {
       <Stack.Screen options={{ title: editingId ? 'Edit reminder' : 'New reminder' }} />
       <ReminderMap
         cameraRef={cameraRef}
-        showCenterPin
+        mapViewRef={mapViewRef}
+        showCenterPin={manualPinMode}
         selectedCoordinate={coordinate}
         onCenterChange={handleCenterChange}
         radiusCircles={radiusCircles}
         reminderPins={reminderPins}
         recenterButtonTop={60}
       />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={
+          manualPinMode ? 'Disable manual pin mode' : 'Enable manual pin mode'
+        }
+        accessibilityState={{ selected: manualPinMode }}
+        hitSlop={8}
+        onPress={toggleManualPinMode}
+        style={({ pressed }) => [
+          styles.manualPinButton,
+          manualPinMode
+            ? styles.manualPinButtonActive
+            : { backgroundColor: colors.background },
+          pressed && styles.recenterButtonPressed,
+        ]}
+      >
+        <Ionicons
+          name={manualPinMode ? 'location' : 'location-outline'}
+          size={22}
+          color={manualPinMode ? '#fff' : colors.text}
+        />
+      </Pressable>
 
       <View style={styles.searchOverlay}>
         <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
@@ -393,6 +435,27 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 10,
     gap: 4,
+  },
+  manualPinButton: {
+    position: 'absolute',
+    right: 12,
+    top: 112,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  manualPinButtonActive: {
+    backgroundColor: '#ef4444',
+  },
+  recenterButtonPressed: {
+    opacity: 0.7,
   },
   searchBar: {
     flexDirection: 'row',

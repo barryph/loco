@@ -34,6 +34,7 @@ type RadiusCircle = Coordinate & { id: string; radius: number };
 
 export type ReminderMapProps = {
   cameraRef?: React.RefObject<React.ElementRef<typeof Camera> | null>;
+  mapViewRef?: React.RefObject<React.ElementRef<typeof MapView> | null>;
   initialCoordinate?: Coordinate;
   initialZoom?: number;
   showCenterPin?: boolean;
@@ -70,6 +71,7 @@ function circlePolygon(
 
 export function ReminderMap({
   cameraRef,
+  mapViewRef,
   initialCoordinate,
   initialZoom = 14,
   showCenterPin = false,
@@ -137,6 +139,7 @@ export function ReminderMap({
   return (
     <View style={[styles.container, style]}>
       <MapView
+        ref={mapViewRef}
         style={styles.map}
         onRegionIsChanging={showCenterPin ? handleRegionChange : undefined}
         logoEnabled
