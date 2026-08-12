@@ -112,6 +112,13 @@ export function ReminderMap({
   };
 
   const handleRecenter = async () => {
+    if (userLocation) {
+      resolvedCameraRef.current?.flyTo([
+        userLocation.coords.longitude,
+        userLocation.coords.latitude,
+      ], 1000);
+      return;
+    }
     setRecentering(true);
     try {
       const { status } = await Location.getForegroundPermissionsAsync();
@@ -201,6 +208,7 @@ export function ReminderMap({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Recenter map on your current location"
+        disabled={recentering}
         hitSlop={8}
         onPress={handleRecenter}
         style={({ pressed }) => [
