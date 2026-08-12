@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   manualPinButton: {
     position: 'absolute',
     right: 12,
-    top: 112,
+    top: 164,
     width: 44,
     height: 44,
     borderRadius: 22,

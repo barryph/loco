@@ -111,6 +111,14 @@ export function ReminderMap({
     }
   };
 
+  const handleResetNorth = () => {
+    resolvedCameraRef.current?.setCamera({
+      heading: 0,
+      animationDuration: 600,
+      animationMode: 'flyTo',
+    });
+  };
+
   const handleRecenter = async () => {
     if (userLocation) {
       resolvedCameraRef.current?.flyTo([
@@ -225,6 +233,20 @@ export function ReminderMap({
         ) : (
           <Ionicons name="locate" size={22} color={colors.text} />
         )}
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Reset map orientation to north"
+        hitSlop={8}
+        onPress={handleResetNorth}
+        style={({ pressed }) => [
+          styles.recenterButton,
+          { backgroundColor: colors.background, top: recenterButtonTop + 52 },
+          pressed && styles.recenterButtonPressed,
+        ]}
+      >
+        <Ionicons name="compass-outline" size={22} color={colors.text} />
       </Pressable>
     </View>
   );
