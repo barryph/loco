@@ -116,7 +116,7 @@ export function ReminderMap({
       resolvedCameraRef.current?.flyTo([
         userLocation.coords.longitude,
         userLocation.coords.latitude,
-      ], 1000);
+      ], 600);
       return;
     }
     setRecentering(true);
@@ -134,7 +134,7 @@ export function ReminderMap({
         resolvedCameraRef.current?.flyTo([
           position.coords.longitude,
           position.coords.latitude,
-        ], 1000);
+        ], 600);
       }
     } catch (e) {
       console.warn('Failed to recenter map:', e);

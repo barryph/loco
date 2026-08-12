@@ -91,7 +91,7 @@ export default function NewReminderScreen() {
   const mountedInEditMode = useRef(editingId !== null).current;
 
   const flyToCoord = useCallback((coord: Coordinate) => {
-    cameraRef.current?.flyTo([coord.longitude, coord.latitude], 1500);
+    cameraRef.current?.flyTo([coord.longitude, coord.latitude], 600);
     suppressPinSyncRef.current = true;
     setTimeout(() => {
       suppressPinSyncRef.current = false;
@@ -369,7 +369,7 @@ export default function NewReminderScreen() {
             recenterButtonTop={60}
           />
         ) : null}
-  
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={
@@ -392,7 +392,7 @@ export default function NewReminderScreen() {
             color={manualPinMode ? '#fff' : colors.text}
           />
         </Pressable>
-  
+
         <View style={styles.searchOverlay}>
           <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
             <Ionicons name="search" size={18} color={colors.icon} />
@@ -416,7 +416,7 @@ export default function NewReminderScreen() {
               </Pressable>
             ) : null}
           </View>
-  
+
           {searchResults.length > 0 ? (
             <ThemedView style={styles.searchResults}>
               <FlatList
@@ -439,7 +439,7 @@ export default function NewReminderScreen() {
             </ThemedView>
           ) : null}
         </View>
-  
+
         <ThemedView style={[styles.bottomPanel, { borderTopColor: colors.icon }]}>
           <View style={styles.locationRow}>
             <Ionicons name="location" size={18} color={colors.tint} />
@@ -495,7 +495,7 @@ export default function NewReminderScreen() {
             {renderRadiusChips()}
           </View>
         </ThemedView>
-        </SafeAreaView>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

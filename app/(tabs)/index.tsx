@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 import { ReminderMap } from '@/components/reminder-map';
 import { ThemedText } from '@/components/themed-text';
@@ -202,7 +203,7 @@ export default function HomeScreen() {
   }, []);
 
   const flyToCoord = useCallback((coord: Coordinate) => {
-    cameraRef.current?.flyTo([coord.longitude, coord.latitude], 1500);
+    cameraRef.current?.flyTo([coord.longitude, coord.latitude], 600);
     suppressPinSyncRef.current = true;
     setTimeout(() => {
       suppressPinSyncRef.current = false;
@@ -378,7 +379,7 @@ export default function HomeScreen() {
   }, []);
 
   const handleRowPress = useCallback((reminder: Reminder) => {
-    cameraRef.current?.flyTo([reminder.longitude, reminder.latitude], 1500);
+    cameraRef.current?.flyTo([reminder.longitude, reminder.latitude], 600);
     sheetRef.current?.collapse();
   }, []);
 
@@ -492,7 +493,10 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
-        <ThemedText type="title">Home</ThemedText>
+        <View style={styles.headerLogo}>
+          <FontAwesome6 name="map-location" size={22} color="black" />
+          <ThemedText type="title">Loco</ThemedText>
+        </View>
         <Pressable
           onPress={() => router.push('/reminders')}
           hitSlop={8}
@@ -728,8 +732,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  headerLogo: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
   },
   headerButton: {
     padding: 4,
