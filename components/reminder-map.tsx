@@ -9,7 +9,7 @@ import Mapbox, {
 } from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -40,7 +40,7 @@ export type ReminderMapProps = {
   showCenterPin?: boolean;
   selectedCoordinate?: Coordinate | null;
   radiusCircles?: RadiusCircle[];
-  reminderPins?: (Coordinate & { id: string })[];
+  reminderPins?: (Coordinate & { id: string; name: string })[];
   onCenterChange?: (coordinate: Coordinate) => void;
   recenterButtonTop?: number;
   style?: View['props']['style'];
@@ -191,6 +191,11 @@ export function ReminderMap({
             <PointAnnotation key={pin.id} id={`reminder-${pin.id}`} coordinate={[pin.longitude, pin.latitude]}>
               <View style={styles.reminderPin}>
                 <Ionicons name="location" size={34} color="#3b82f6" />
+                <View style={[styles.reminderPinLabel, { backgroundColor: colors.background }]}>
+                  <Text numberOfLines={1} style={[styles.reminderPinLabelText, { color: colors.text }]}>
+                    {pin.name}
+                  </Text>
+                </View>
               </View>
             </PointAnnotation>
           ))
@@ -243,6 +248,22 @@ const styles = StyleSheet.create({
   reminderPin: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  reminderPinLabel: {
+    marginTop: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    maxWidth: 120,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+  reminderPinLabelText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   userLocationMarker: {
     width: 22,

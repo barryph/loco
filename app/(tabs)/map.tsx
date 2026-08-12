@@ -70,6 +70,7 @@ export default function MapScreen() {
   }));
   const reminderPins = reminders.map((reminder) => ({
     id: reminder.id,
+    name: reminder.name,
     latitude: reminder.latitude,
     longitude: reminder.longitude,
   }));

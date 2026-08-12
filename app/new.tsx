@@ -63,6 +63,7 @@ export default function NewReminderScreen() {
   const [place, setPlace] = useState<SelectedPlace | null>(null);
   const [name, setName] = useState('');
   const [nameEdited, setNameEdited] = useState(false);
+  const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,6 +134,7 @@ export default function NewReminderScreen() {
     setPlace(null);
     setName('');
     setNameEdited(false);
+    setDescription('');
     setSearchQuery('');
     setSearchResults([]);
 
@@ -152,6 +154,7 @@ export default function NewReminderScreen() {
           longitude: reminder.longitude,
         });
         setName(reminder.name);
+        setDescription(reminder.description ?? '');
         setMapReady(true);
       });
     } else if (userLocationRef.current) {
@@ -256,6 +259,7 @@ export default function NewReminderScreen() {
     try {
       const data = {
         name: name.trim() || place?.name || 'Reminder',
+        description: description.trim() || null,
         latitude: coordinate.latitude,
         longitude: coordinate.longitude,
         placeId: place?.placeId ?? null,
@@ -298,6 +302,7 @@ export default function NewReminderScreen() {
   }));
   const reminderPins = otherReminders.map((reminder) => ({
     id: reminder.id,
+    name: reminder.name,
     latitude: reminder.latitude,
     longitude: reminder.longitude,
   }));
@@ -403,7 +408,7 @@ export default function NewReminderScreen() {
               setName(text);
               setNameEdited(true);
             }}
-            placeholder={editingId ? 'Reminder name' : 'What do you want to remember here?'}
+            placeholder="Reminder name"
             placeholderTextColor={colors.icon}
             style={[styles.nameInput, { color: colors.text, backgroundColor: colors.background }]}
           />
@@ -424,6 +429,18 @@ export default function NewReminderScreen() {
             )}
           </Pressable>
         </View>
+        <TextInput
+          value={description}
+          onChangeText={setDescription}
+          placeholder="What do you want to remember here?"
+          placeholderTextColor={colors.icon}
+          multiline
+          style={[
+            styles.nameInput,
+            styles.descriptionInput,
+            { color: colors.text, backgroundColor: colors.background },
+          ]}
+        />
       </ThemedView>
     </SafeAreaView>
   );
@@ -534,6 +551,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#00000033',
+  },
+  descriptionInput: {
+    flex: 0,
+    fontSize: 14,
+    maxHeight: 88,
+    textAlignVertical: 'top',
   },
   saveButton: {
     paddingHorizontal: 18,

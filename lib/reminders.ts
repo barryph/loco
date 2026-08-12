@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type Reminder = {
   id: string;
   name: string;
+  description: string | null;
   latitude: number;
   longitude: number;
   placeId?: string | null;
@@ -13,6 +14,7 @@ export type Reminder = {
 
 export type ReminderInput = {
   name: string;
+  description?: string | null;
   latitude: number;
   longitude: number;
   placeId?: string | null;
@@ -57,6 +59,7 @@ export async function createReminder(input: ReminderInput): Promise<Reminder> {
   const reminder: Reminder = {
     id: generateId(),
     ...input,
+    description: input.description ?? null,
     createdAt: now,
     updatedAt: now,
   };

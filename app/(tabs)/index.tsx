@@ -178,6 +178,11 @@ export default function RemindersScreen() {
       style={({ pressed }) => [styles.reminderRow, pressed && styles.rowPressed]}>
       <View style={styles.reminderInfo}>
         <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
+        {item.description ? (
+          <ThemedText numberOfLines={1} style={styles.reminderSubtitle}>
+            {item.description}
+          </ThemedText>
+        ) : null}
         <ThemedText numberOfLines={1} style={styles.reminderSubtitle}>
           {item.placeName ?? `${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`}
         </ThemedText>
