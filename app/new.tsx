@@ -9,6 +9,7 @@ import {
   FlatList,
   Keyboard,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -23,7 +24,11 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { syncGeofences } from '@/lib/geofencing';
 import { reverseGeocode, searchPlaces, type MapboxPlace } from '@/lib/mapbox';
 import { createReminder, getReminder, getReminders, updateReminder, type Reminder } from '@/lib/reminders';
-import { getGeofenceRadius } from '@/lib/settings';
+import {
+  DEFAULT_GEOFENCE_RADIUS,
+  formatRadius,
+  GEOFENCE_RADIUS_PRESETS,
+} from '@/lib/settings';
 
 type Coordinate = { latitude: number; longitude: number };
 
@@ -71,7 +76,7 @@ export default function NewReminderScreen() {
   const [searching, setSearching] = useState(false);
 
   const [otherReminders, setOtherReminders] = useState<Reminder[]>([]);
-  const [geofenceRadius, setGeofenceRadius] = useState(1000);
+  const [radius, setRadius] = useState(DEFAULT_GEOFENCE_RADIUS);
 
   const userLocationRef = useRef<Coordinate | null>(null);
   const suppressPinSyncRef = useRef(false);
@@ -126,7 +131,6 @@ export default function NewReminderScreen() {
 
   useEffect(() => {
     getReminders().then(setOtherReminders);
-    getGeofenceRadius().then(setGeofenceRadius);
   }, []);
 
   useEffect(() => {
@@ -137,6 +141,7 @@ export default function NewReminderScreen() {
     setDescription('');
     setSearchQuery('');
     setSearchResults([]);
+    setRadius(DEFAULT_GEOFENCE_RADIUS);
 
     if (editingId) {
       getReminder(editingId).then((reminder) => {
@@ -155,6 +160,7 @@ export default function NewReminderScreen() {
         });
         setName(reminder.name);
         setDescription(reminder.description ?? '');
+        setRadius(reminder.radius);
         setMapReady(true);
       });
     } else if (userLocationRef.current) {
@@ -262,6 +268,7 @@ export default function NewReminderScreen() {
         description: description.trim() || null,
         latitude: coordinate.latitude,
         longitude: coordinate.longitude,
+        radius,
         placeId: place?.placeId ?? null,
         placeName: place?.address ?? place?.name ?? null,
       };
@@ -294,11 +301,42 @@ export default function NewReminderScreen() {
         ? `${coordinate.latitude.toFixed(5)}, ${coordinate.longitude.toFixed(5)}`
         : 'Search for a place or move the map';
 
+  const invertedTextColor = colorScheme === 'light' ? Colors['dark'].text : Colors['light'].text;
+
+  const renderRadiusChips = () => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.radiusChips}>
+      {GEOFENCE_RADIUS_PRESETS.map((preset) => {
+        const selected = preset === radius;
+        return (
+          <Pressable
+            key={preset}
+            onPress={() => setRadius(preset)}
+            style={[
+              styles.radiusChip,
+              { borderColor: selected ? colors.tint : colors.icon },
+              selected && { backgroundColor: colors.tint },
+            ]}>
+            <ThemedText
+              style={[
+                styles.radiusChipText,
+                { color: selected ? invertedTextColor : colors.text },
+              ]}>
+              {formatRadius(preset)}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+
   const radiusCircles = otherReminders.map((reminder) => ({
     id: reminder.id,
     latitude: reminder.latitude,
     longitude: reminder.longitude,
-    radius: geofenceRadius,
+    radius: reminder.radius,
   }));
   const reminderPins = otherReminders.map((reminder) => ({
     id: reminder.id,
@@ -441,6 +479,13 @@ export default function NewReminderScreen() {
             { color: colors.text, backgroundColor: colors.background },
           ]}
         />
+        <View style={styles.radiusSection}>
+          <ThemedText type="defaultSemiBold">Notification radius</ThemedText>
+          <ThemedText style={[styles.radiusHint, { color: colors.icon }]}>
+            The distance from this reminder at which you will be notified.
+          </ThemedText>
+          {renderRadiusChips()}
+        </View>
       </ThemedView>
     </SafeAreaView>
   );
@@ -525,7 +570,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 20,
+    paddingBottom: 25,
     gap: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
@@ -542,6 +587,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  radiusSection: {
+    gap: 4,
+  },
+  radiusHint: {
+    fontSize: 13,
+  },
+  radiusChips: {
+    gap: 8,
+    paddingVertical: 4,
+  },
+  radiusChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  radiusChipText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   nameInput: {
     flex: 1,

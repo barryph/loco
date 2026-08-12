@@ -6,7 +6,6 @@ import {
   FlatList,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -26,13 +25,7 @@ import {
   type LocationPermissions,
 } from '@/lib/permissions';
 import { deleteReminder, getReminders, subscribeReminders, type Reminder } from '@/lib/reminders';
-import {
-  formatRadius,
-  GEOFENCE_RADIUS_PRESETS,
-  getGeofenceRadius,
-  setGeofenceRadius,
-  subscribeGeofenceRadius,
-} from '@/lib/settings';
+import { formatRadius } from '@/lib/settings';
 
 export default function RemindersScreen() {
   const router = useRouter();
@@ -40,7 +33,6 @@ export default function RemindersScreen() {
   const colors = Colors[colorScheme ?? 'light'];
 
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [radius, setRadius] = useState(1000);
   const [permissions, setPermissions] = useState<LocationPermissions>({
     foreground: 'undetermined',
     background: 'undetermined',
@@ -58,14 +50,11 @@ export default function RemindersScreen() {
 
   React.useEffect(() => {
     getReminders().then(setReminders);
-    getGeofenceRadius().then(setRadius);
     syncGeofences().catch((e) => console.warn('Failed to sync geofences:', e));
 
     const unsubscribeReminders = subscribeReminders(setReminders);
-    const unsubscribeRadius = subscribeGeofenceRadius(setRadius);
     return () => {
       unsubscribeReminders();
-      unsubscribeRadius();
     };
   }, []);
 
@@ -81,12 +70,6 @@ export default function RemindersScreen() {
         },
       },
     ]);
-  };
-
-  const changeRadius = async (value: number) => {
-    setRadius(value);
-    await setGeofenceRadius(value);
-    await syncGeofences();
   };
 
   const enableBackgroundLocation = async () => {
@@ -121,32 +104,6 @@ export default function RemindersScreen() {
       syncGeofences().catch((e) => console.warn('Failed to sync geofences:', e));
     }
   };
-
-  const renderRadiusChips = () => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.radiusChips}>
-      {GEOFENCE_RADIUS_PRESETS.map((preset) => {
-        const selected = preset === radius;
-        return (
-          <Pressable
-            key={preset}
-            onPress={() => changeRadius(preset)}
-            style={[
-              styles.radiusChip,
-              { borderColor: selected ? colors.tint : colors.icon },
-              selected && { backgroundColor: colors.tint },
-            ]}>
-            <ThemedText
-              style={[
-                styles.radiusChipText,
-                { color: selected ? invertedTextColor : colors.text },
-              ]}>
-              {formatRadius(preset)}
-            </ThemedText>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
 
   const renderPermissionBanner = () => {
     if (Platform.OS === 'web' || permissions.background === 'granted') {
@@ -185,6 +142,8 @@ export default function RemindersScreen() {
         ) : null}
         <ThemedText numberOfLines={1} style={styles.reminderSubtitle}>
           {item.placeName ?? `${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`}
+          {' · '}
+          {formatRadius(item.radius)}
         </ThemedText>
       </View>
       <Pressable
@@ -222,14 +181,6 @@ export default function RemindersScreen() {
       </View>
 
       {renderPermissionBanner()}
-
-      <View style={styles.radiusSection}>
-        <ThemedText type="defaultSemiBold">Notification radius</ThemedText>
-        <ThemedText style={[styles.radiusHint, { color: colors.icon }]}>
-          The distance from a reminder at which you will be notified.
-        </ThemedText>
-        {renderRadiusChips()}
-      </View>
 
       <FlatList
         data={reminders}
@@ -292,28 +243,6 @@ const styles = StyleSheet.create({
   },
   bannerButtonText: {
     color: '#fff',
-    fontWeight: '600',
-  },
-  radiusSection: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 4,
-  },
-  radiusHint: {
-    fontSize: 13,
-  },
-  radiusChips: {
-    gap: 8,
-    paddingVertical: 8,
-  },
-  radiusChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  radiusChipText: {
-    fontSize: 14,
     fontWeight: '600',
   },
   listContent: {

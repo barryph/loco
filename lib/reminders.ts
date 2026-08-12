@@ -1,11 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { DEFAULT_GEOFENCE_RADIUS } from './settings';
+
 export type Reminder = {
   id: string;
   name: string;
   description: string | null;
   latitude: number;
   longitude: number;
+  radius: number;
   placeId?: string | null;
   placeName?: string | null;
   createdAt: number;
@@ -17,6 +20,7 @@ export type ReminderInput = {
   description?: string | null;
   latitude: number;
   longitude: number;
+  radius: number;
   placeId?: string | null;
   placeName?: string | null;
 };
@@ -38,7 +42,16 @@ export async function getReminders(): Promise<Reminder[]> {
   }
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Reminder[]) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return (parsed as Reminder[]).map((reminder) => ({
+      ...reminder,
+      radius:
+        Number.isFinite(reminder.radius) && reminder.radius > 0
+          ? reminder.radius
+          : DEFAULT_GEOFENCE_RADIUS,
+    }));
   } catch {
     return [];
   }

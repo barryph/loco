@@ -8,7 +8,6 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getReminders, subscribeReminders, type Reminder } from '@/lib/reminders';
-import { getGeofenceRadius, subscribeGeofenceRadius } from '@/lib/settings';
 
 type Coordinate = { latitude: number; longitude: number };
 
@@ -19,7 +18,6 @@ export default function MapScreen() {
   const [initialCoordinate, setInitialCoordinate] = useState<Coordinate | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [geofenceRadius, setGeofenceRadius] = useState(1000);
 
   useEffect(() => {
     (async () => {
@@ -53,12 +51,9 @@ export default function MapScreen() {
 
   useEffect(() => {
     getReminders().then(setReminders);
-    getGeofenceRadius().then(setGeofenceRadius);
     const unsubscribeReminders = subscribeReminders(setReminders);
-    const unsubscribeRadius = subscribeGeofenceRadius(setGeofenceRadius);
     return () => {
       unsubscribeReminders();
-      unsubscribeRadius();
     };
   }, []);
 
@@ -66,7 +61,7 @@ export default function MapScreen() {
     id: reminder.id,
     latitude: reminder.latitude,
     longitude: reminder.longitude,
-    radius: geofenceRadius,
+    radius: reminder.radius,
   }));
   const reminderPins = reminders.map((reminder) => ({
     id: reminder.id,
