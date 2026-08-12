@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { Camera, MapView } from '@rnmapbox/maps';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
@@ -8,6 +9,8 @@ import {
   Alert,
   FlatList,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -56,6 +59,7 @@ export default function NewReminderScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const headerHeight = useHeaderHeight();
   const params = useLocalSearchParams<{ id?: string }>();
   const editingId = typeof params.id === 'string' && params.id.length > 0 ? params.id : null;
 
@@ -346,148 +350,153 @@ export default function NewReminderScreen() {
   }));
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
-      <Stack.Screen options={{ title: editingId ? 'Edit reminder' : 'New reminder' }} />
-      {mapReady ? (
-        <ReminderMap
-          cameraRef={cameraRef}
-          mapViewRef={mapViewRef}
-          initialCoordinate={coordinate ?? undefined}
-          showCenterPin={manualPinMode}
-          selectedCoordinate={coordinate}
-          onCenterChange={handleCenterChange}
-          radiusCircles={radiusCircles}
-          reminderPins={reminderPins}
-          recenterButtonTop={60}
-        />
-      ) : null}
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={
-          manualPinMode ? 'Disable manual pin mode' : 'Enable manual pin mode'
-        }
-        accessibilityState={{ selected: manualPinMode }}
-        hitSlop={8}
-        onPress={toggleManualPinMode}
-        style={({ pressed }) => [
-          styles.manualPinButton,
-          manualPinMode
-            ? styles.manualPinButtonActive
-            : { backgroundColor: colors.background },
-          pressed && styles.recenterButtonPressed,
-        ]}
-      >
-        <Ionicons
-          name={manualPinMode ? 'location' : 'location-outline'}
-          size={22}
-          color={manualPinMode ? '#fff' : colors.text}
-        />
-      </Pressable>
-
-      <View style={styles.searchOverlay}>
-        <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
-          <Ionicons name="search" size={18} color={colors.icon} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={(text) => {
-              setSearchQuery(text);
-              setNameEdited(true);
-            }}
-            placeholder="Search for a place"
-            placeholderTextColor={colors.icon}
-            style={[styles.searchInput, { color: colors.text }]}
-            returnKeyType="search"
-            autoCorrect={false}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+        <Stack.Screen options={{ title: editingId ? 'Edit reminder' : 'New reminder' }} />
+        {mapReady ? (
+          <ReminderMap
+            cameraRef={cameraRef}
+            mapViewRef={mapViewRef}
+            initialCoordinate={coordinate ?? undefined}
+            showCenterPin={manualPinMode}
+            selectedCoordinate={coordinate}
+            onCenterChange={handleCenterChange}
+            radiusCircles={radiusCircles}
+            reminderPins={reminderPins}
+            recenterButtonTop={60}
           />
-          {searching ? (
-            <ActivityIndicator size="small" color={colors.icon} />
-          ) : searchQuery.length > 0 ? (
-            <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={colors.icon} />
-            </Pressable>
+        ) : null}
+  
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            manualPinMode ? 'Disable manual pin mode' : 'Enable manual pin mode'
+          }
+          accessibilityState={{ selected: manualPinMode }}
+          hitSlop={8}
+          onPress={toggleManualPinMode}
+          style={({ pressed }) => [
+            styles.manualPinButton,
+            manualPinMode
+              ? styles.manualPinButtonActive
+              : { backgroundColor: colors.background },
+            pressed && styles.recenterButtonPressed,
+          ]}
+        >
+          <Ionicons
+            name={manualPinMode ? 'location' : 'location-outline'}
+            size={22}
+            color={manualPinMode ? '#fff' : colors.text}
+          />
+        </Pressable>
+  
+        <View style={styles.searchOverlay}>
+          <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
+            <Ionicons name="search" size={18} color={colors.icon} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={(text) => {
+                setSearchQuery(text);
+                setNameEdited(true);
+              }}
+              placeholder="Search for a place"
+              placeholderTextColor={colors.icon}
+              style={[styles.searchInput, { color: colors.text }]}
+              returnKeyType="search"
+              autoCorrect={false}
+            />
+            {searching ? (
+              <ActivityIndicator size="small" color={colors.icon} />
+            ) : searchQuery.length > 0 ? (
+              <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+                <Ionicons name="close-circle" size={18} color={colors.icon} />
+              </Pressable>
+            ) : null}
+          </View>
+  
+          {searchResults.length > 0 ? (
+            <ThemedView style={styles.searchResults}>
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.placeId}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <Pressable onPress={() => selectResult(item)} style={styles.searchResult}>
+                    <ThemedText type="defaultSemiBold" numberOfLines={1}>
+                      {item.name}
+                    </ThemedText>
+                    {item.address ? (
+                      <ThemedText numberOfLines={1} style={[styles.searchResultAddress, { color: colors.icon }]}>
+                        {item.address}
+                      </ThemedText>
+                    ) : null}
+                  </Pressable>
+                )}
+              />
+            </ThemedView>
           ) : null}
         </View>
-
-        {searchResults.length > 0 ? (
-          <ThemedView style={styles.searchResults}>
-            <FlatList
-              data={searchResults}
-              keyExtractor={(item) => item.placeId}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <Pressable onPress={() => selectResult(item)} style={styles.searchResult}>
-                  <ThemedText type="defaultSemiBold" numberOfLines={1}>
-                    {item.name}
-                  </ThemedText>
-                  {item.address ? (
-                    <ThemedText numberOfLines={1} style={[styles.searchResultAddress, { color: colors.icon }]}>
-                      {item.address}
-                    </ThemedText>
-                  ) : null}
-                </Pressable>
-              )}
+  
+        <ThemedView style={[styles.bottomPanel, { borderTopColor: colors.icon }]}>
+          <View style={styles.locationRow}>
+            <Ionicons name="location" size={18} color={colors.tint} />
+            <ThemedText numberOfLines={1} style={styles.locationText}>
+              {locationSummary}
+            </ThemedText>
+          </View>
+          <View style={styles.nameRow}>
+            <TextInput
+              value={name}
+              onChangeText={(text) => {
+                setName(text);
+                setNameEdited(true);
+              }}
+              placeholder="Reminder name"
+              placeholderTextColor={colors.icon}
+              style={[styles.nameInput, { color: colors.text, backgroundColor: colors.background }]}
             />
-          </ThemedView>
-        ) : null}
-      </View>
-
-      <ThemedView style={[styles.bottomPanel, { borderTopColor: colors.icon }]}>
-        <View style={styles.locationRow}>
-          <Ionicons name="location" size={18} color={colors.tint} />
-          <ThemedText numberOfLines={1} style={styles.locationText}>
-            {locationSummary}
-          </ThemedText>
-        </View>
-        <View style={styles.nameRow}>
+            <Pressable
+              onPress={handleSave}
+              disabled={!coordinate || saving}
+              style={[
+                styles.saveButton,
+                { backgroundColor: colors.tint },
+                (!coordinate || saving) && styles.saveButtonDisabled,
+              ]}>
+              {saving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <ThemedText style={styles.saveButtonText}>
+                  {editingId ? 'Save' : 'Create reminder'}
+                </ThemedText>
+              )}
+            </Pressable>
+          </View>
           <TextInput
-            value={name}
-            onChangeText={(text) => {
-              setName(text);
-              setNameEdited(true);
-            }}
-            placeholder="Reminder name"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="What do you want to remember here?"
             placeholderTextColor={colors.icon}
-            style={[styles.nameInput, { color: colors.text, backgroundColor: colors.background }]}
-          />
-          <Pressable
-            onPress={handleSave}
-            disabled={!coordinate || saving}
+            multiline
             style={[
-              styles.saveButton,
-              { backgroundColor: colors.tint },
-              (!coordinate || saving) && styles.saveButtonDisabled,
-            ]}>
-            {saving ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <ThemedText style={styles.saveButtonText}>
-                {editingId ? 'Save' : 'Create reminder'}
-              </ThemedText>
-            )}
-          </Pressable>
-        </View>
-        <TextInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder="What do you want to remember here?"
-          placeholderTextColor={colors.icon}
-          multiline
-          style={[
-            styles.nameInput,
-            styles.descriptionInput,
-            { color: colors.text, backgroundColor: colors.background },
-          ]}
-        />
-        <View style={styles.radiusSection}>
-          <ThemedText type="defaultSemiBold">Notification radius</ThemedText>
-          <ThemedText style={[styles.radiusHint, { color: colors.icon }]}>
-            The distance from this reminder at which you will be notified.
-          </ThemedText>
-          {renderRadiusChips()}
-        </View>
-      </ThemedView>
-    </SafeAreaView>
+              styles.nameInput,
+              styles.descriptionInput,
+              { color: colors.text, backgroundColor: colors.background },
+            ]}
+          />
+          <View style={styles.radiusSection}>
+            <ThemedText type="defaultSemiBold">Notification radius</ThemedText>
+            <ThemedText style={[styles.radiusHint, { color: colors.icon }]}>
+              The distance from this reminder at which you will be notified.
+            </ThemedText>
+            {renderRadiusChips()}
+          </View>
+        </ThemedView>
+        </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
