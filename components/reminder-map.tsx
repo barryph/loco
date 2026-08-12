@@ -9,7 +9,7 @@ import Mapbox, {
   ShapeSource,
 } from '@rnmapbox/maps';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { getMapboxToken } from '@/lib/mapbox';
 
@@ -18,6 +18,8 @@ try {
 } catch (e) {
   console.warn(e);
 }
+
+const isNative = Platform.OS !== 'web';
 
 type Coordinate = {
   latitude: number;
@@ -113,9 +115,9 @@ export function ReminderMap({
               : undefined
           }
         />
-        <LocationPuck puckBearingEnabled={false} />
+        {isNative ? <LocationPuck puckBearingEnabled={false} /> : null}
 
-        {radiusShape ? (
+        {isNative && radiusShape ? (
           <ShapeSource id="loco-radius-circles" shape={radiusShape as GeoJSON.FeatureCollection}>
             <FillLayer
               id="loco-radius-fill"
@@ -128,13 +130,15 @@ export function ReminderMap({
           </ShapeSource>
         ) : null}
 
-        {reminderPins.map((pin) => (
-          <PointAnnotation key={pin.id} id={`reminder-${pin.id}`} coordinate={[pin.longitude, pin.latitude]}>
-            <View style={styles.reminderPin}>
-              <Ionicons name="location" size={34} color="#3b82f6" />
-            </View>
-          </PointAnnotation>
-        ))}
+        {isNative
+          ? reminderPins.map((pin) => (
+              <PointAnnotation key={pin.id} id={`reminder-${pin.id}`} coordinate={[pin.longitude, pin.latitude]}>
+                <View style={styles.reminderPin}>
+                  <Ionicons name="location" size={34} color="#3b82f6" />
+                </View>
+              </PointAnnotation>
+            ))
+          : null}
       </MapView>
 
       {showCenterPin ? (

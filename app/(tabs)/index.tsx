@@ -149,7 +149,7 @@ export default function RemindersScreen() {
   );
 
   const renderPermissionBanner = () => {
-    if (permissions.background === 'granted') {
+    if (Platform.OS === 'web' || permissions.background === 'granted') {
       return null;
     }
     const denied = permissions.background === 'denied';

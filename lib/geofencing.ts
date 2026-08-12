@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 
 import { getReminders } from './reminders';
@@ -6,6 +7,9 @@ import { getGeofenceRadius } from './settings';
 export const GEOFENCING_TASK = 'loco-geofencing';
 
 export async function syncGeofences(): Promise<void> {
+  if (Platform.OS === 'web') {
+    return;
+  }
   const reminders = await getReminders();
   const radius = await getGeofenceRadius();
 
@@ -29,6 +33,9 @@ export async function syncGeofences(): Promise<void> {
 }
 
 export async function stopGeofences(): Promise<void> {
+  if (Platform.OS === 'web') {
+    return;
+  }
   await Location.stopGeofencingAsync(GEOFENCING_TASK).catch(() => {
     // Nothing was registered; nothing to stop.
   });
