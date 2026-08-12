@@ -138,7 +138,7 @@ export default function RemindersScreen() {
             <ThemedText
               style={[
                 styles.radiusChipText,
-                { color: selected ? '#fff' : colors.text },
+                { color: selected ? invertedTextColor : colors.text },
               ]}>
               {formatRadius(preset)}
             </ThemedText>
@@ -194,6 +194,8 @@ export default function RemindersScreen() {
     </Pressable>
   );
 
+  const invertedTextColor = colorScheme === 'light' ? Colors['dark'].text : Colors['light'].text;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
@@ -208,8 +210,8 @@ export default function RemindersScreen() {
             onPress={() => router.push('/new')}
             hitSlop={8}
             style={[styles.addButton, { backgroundColor: colors.tint }]}>
-            <Ionicons name="add" size={22} color="#fff" />
-            <ThemedText style={styles.addButtonText}>Add</ThemedText>
+            <Ionicons name="add" size={22} color={invertedTextColor} />
+            <ThemedText style={[styles.addButtonText, { color: invertedTextColor }]}>Add</ThemedText>
           </Pressable>
         </View>
       </View>
@@ -264,7 +266,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   addButtonText: {
-    color: '#fff',
     fontWeight: '600',
   },
   banner: {
