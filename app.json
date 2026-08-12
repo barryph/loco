@@ -29,6 +29,18 @@
     },
     "plugins": [
       "expo-router",
+      "@rnmapbox/maps",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Loco to use your location so you can find and select reminder locations.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Loco to monitor your location in the background so it can remind you when you're near a saved location.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
