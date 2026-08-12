@@ -3,7 +3,6 @@ import Mapbox, {
   Camera,
   FillLayer,
   LineLayer,
-  LocationPuck,
   MapView,
   PointAnnotation,
   ShapeSource,
@@ -14,6 +13,7 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useUserLocation } from '@/hooks/use-user-location';
 import { getMapboxToken } from '@/lib/mapbox';
 import { requestForegroundLocation } from '@/lib/permissions';
 
@@ -85,6 +85,7 @@ export function ReminderMap({
   const internalCameraRef = useRef<React.ElementRef<typeof Camera>>(null);
   const resolvedCameraRef = cameraRef ?? internalCameraRef;
   const [recentering, setRecentering] = useState(false);
+  const userLocation = useUserLocation();
 
   const radiusShape =
     radiusCircles.length > 0
@@ -152,7 +153,17 @@ export function ReminderMap({
               : undefined
           }
         />
-        {isNative ? <LocationPuck puckBearingEnabled={false} /> : null}
+        {isNative && userLocation ? (
+          <PointAnnotation
+            id="loco-user-location"
+            coordinate={[userLocation.coords.longitude, userLocation.coords.latitude]}
+          >
+            <View style={styles.userLocationMarker}>
+              <View style={styles.userLocationHalo} />
+              <View style={styles.userLocationDot} />
+            </View>
+          </PointAnnotation>
+        ) : null}
 
         {isNative && radiusShape ? (
           <ShapeSource id="loco-radius-circles" shape={radiusShape as GeoJSON.FeatureCollection}>
@@ -223,6 +234,32 @@ const styles = StyleSheet.create({
   reminderPin: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  userLocationMarker: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userLocationHalo: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+  },
+  userLocationDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#3b82f6',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
   },
   recenterButton: {
     position: 'absolute',
