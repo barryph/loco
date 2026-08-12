@@ -292,6 +292,7 @@ export default function NewReminderScreen() {
         onCenterChange={handleCenterChange}
         radiusCircles={radiusCircles}
         reminderPins={reminderPins}
+        recenterButtonTop={60}
       />
 
       <View style={styles.searchOverlay}>

@@ -8,10 +8,14 @@ import Mapbox, {
   PointAnnotation,
   ShapeSource,
 } from '@rnmapbox/maps';
-import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import * as Location from 'expo-location';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getMapboxToken } from '@/lib/mapbox';
+import { requestForegroundLocation } from '@/lib/permissions';
 
 try {
   Mapbox.setAccessToken(getMapboxToken());
@@ -37,6 +41,7 @@ export type ReminderMapProps = {
   radiusCircles?: RadiusCircle[];
   reminderPins?: (Coordinate & { id: string })[];
   onCenterChange?: (coordinate: Coordinate) => void;
+  recenterButtonTop?: number;
   style?: View['props']['style'];
 };
 
@@ -72,27 +77,59 @@ export function ReminderMap({
   radiusCircles = [],
   reminderPins = [],
   onCenterChange,
+  recenterButtonTop = 12,
   style,
 }: ReminderMapProps) {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const internalCameraRef = useRef<React.ElementRef<typeof Camera>>(null);
+  const resolvedCameraRef = cameraRef ?? internalCameraRef;
+  const [recentering, setRecentering] = useState(false);
+
   const radiusShape =
     radiusCircles.length > 0
       ? {
-          type: 'FeatureCollection',
-          features: radiusCircles.map((circle) => ({
-            type: 'Feature',
-            properties: { id: circle.id },
-            geometry: {
-              type: 'Polygon',
-              coordinates: [circlePolygon(circle.longitude, circle.latitude, circle.radius)],
-            },
-          })),
-        }
+        type: 'FeatureCollection',
+        features: radiusCircles.map((circle) => ({
+          type: 'Feature',
+          properties: { id: circle.id },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [circlePolygon(circle.longitude, circle.latitude, circle.radius)],
+          },
+        })),
+      }
       : null;
 
   const handleRegionChange = (event: GeoJSON.Feature<GeoJSON.Point>) => {
     const center = event.geometry?.coordinates;
     if (center && Array.isArray(center) && center.length === 2) {
       onCenterChange?.({ longitude: center[0], latitude: center[1] });
+    }
+  };
+
+  const handleRecenter = async () => {
+    setRecentering(true);
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        await requestForegroundLocation();
+      }
+      const position =
+        (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(
+          () => null,
+        )) ??
+        (await Location.getLastKnownPositionAsync({ maxAge: 60_000 }).catch(() => null));
+      if (position) {
+        resolvedCameraRef.current?.flyTo([
+          position.coords.longitude,
+          position.coords.latitude,
+        ], 1000);
+      }
+    } catch (e) {
+      console.warn('Failed to recenter map:', e);
+    } finally {
+      setRecentering(false);
     }
   };
 
@@ -105,13 +142,13 @@ export function ReminderMap({
         attributionEnabled
       >
         <Camera
-          ref={cameraRef}
+          ref={resolvedCameraRef}
           defaultSettings={
             initialCoordinate
               ? {
-                  centerCoordinate: [initialCoordinate.longitude, initialCoordinate.latitude],
-                  zoomLevel: initialZoom,
-                }
+                centerCoordinate: [initialCoordinate.longitude, initialCoordinate.latitude],
+                zoomLevel: initialZoom,
+              }
               : undefined
           }
         />
@@ -132,12 +169,12 @@ export function ReminderMap({
 
         {isNative
           ? reminderPins.map((pin) => (
-              <PointAnnotation key={pin.id} id={`reminder-${pin.id}`} coordinate={[pin.longitude, pin.latitude]}>
-                <View style={styles.reminderPin}>
-                  <Ionicons name="location" size={34} color="#3b82f6" />
-                </View>
-              </PointAnnotation>
-            ))
+            <PointAnnotation key={pin.id} id={`reminder-${pin.id}`} coordinate={[pin.longitude, pin.latitude]}>
+              <View style={styles.reminderPin}>
+                <Ionicons name="location" size={34} color="#3b82f6" />
+              </View>
+            </PointAnnotation>
+          ))
           : null}
       </MapView>
 
@@ -146,6 +183,24 @@ export function ReminderMap({
           <Ionicons name="location" size={44} color="#ef4444" />
         </View>
       ) : null}
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Recenter map on your current location"
+        hitSlop={8}
+        onPress={handleRecenter}
+        style={({ pressed }) => [
+          styles.recenterButton,
+          { backgroundColor: colors.background, top: recenterButtonTop },
+          pressed && styles.recenterButtonPressed,
+        ]}
+      >
+        {recentering ? (
+          <ActivityIndicator size="small" color={colors.text} />
+        ) : (
+          <Ionicons name="locate" size={22} color={colors.text} />
+        )}
+      </Pressable>
     </View>
   );
 }
@@ -168,5 +223,22 @@ const styles = StyleSheet.create({
   reminderPin: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  recenterButton: {
+    position: 'absolute',
+    right: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  recenterButtonPressed: {
+    opacity: 0.7,
   },
 });
